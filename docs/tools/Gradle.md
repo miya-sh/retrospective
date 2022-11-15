@@ -83,23 +83,95 @@ Ruby on Railsが有名とのことで、確かに学生の時くらいに触っ�
 ## vs. Maven
 https://gradle.org/maven-vs-gradle/
 
+- Flexibility
+  - タスクのカスタマイズなどGradleの基礎部分で差があるとのこと
+- Performance
+  以下の要素でGradleの方が速度が良いと言っている
+  - Incremental Build Support
+    - 変更ファイルだけをなるべく処理
+    - タスクの入出力をトラッキングして、変化がなければ処理しない
+  - Build Cache
+  - Gradle Daemon
+    - JVM起動コストや、ビルド関連の情報をキャッシュするので高速化できる
+- User Experience
+  - IDEサポートや、WebUIなど
+- Dependency Management
+  - 依存解決においてもMavenより柔軟である
+    - Mavenはバージョンで依存の書き換えができるが、Gradleは代替ルールによって反映できる。
+    - Mavenは依存解決のスコープは少ないが、Gradleはカスタムできる。
+    - Mavenはコンフリクトの解決に宣言の順序が影響するが、GradleはGraphを完全解決し最新を利用したり厳密に宣言もできる。
 
-# Gradle Wrapper
+## （その他）Gradle Wrapper
 https://docs.gradle.org/7.5.1/userguide/gradle_wrapper.html
+
+Gradle wrapperは推奨された方法で、特定バージョンのGradleでのビルドを実行できるスクリプトのこと。
 
 ![The Wrapper workflow](https://docs.gradle.org/7.5.1/userguide/img/wrapper-workflow.png)
 
+以下のレイアウトで配備される。
+```
+.
+├── gradle
+│   └── wrapper
+│       ├── gradle-wrapper.jar
+│       └── gradle-wrapper.properties
+├── gradlew
+└── gradlew.bat
+```
+- gradlew, gradlew.bat
+  - Wrapperでビルド実行するためのスクリプト
+- gradle-wrapper.properties
+  - Gradleのバージョンなどを指定するプロパティのファイル。ここを見れば、どのバージョンでビルドしたいのかわかる。
+- gradle-wrapper.jar
+  - Gradle distributionをDLしたりするコード込みJar
 
 # Dependency Management
-https://gradle.org/features/#dependency-management
-https://docs.gradle.org/7.5.1/userguide/core_dependency_management.html
 
-## 用語定義
+参考
+- https://docs.gradle.org/7.5.1/userguide/core_dependency_management.html
+- https://gradle.org/features/#dependency-management
 
+## dependency configuration
+特定の目的のためグループ化された、依存関係のネームドセット。
 
-## Configuration とは？
-aa
+多くのPluginはConfigurationはPre-definedされている。
+[Java plugin](https://docs.gradle.org/7.5.1/userguide/java_plugin.html)の場合だと、
+- compileOnly
+- runtimeOnly
+- runtimeClasspath
+- testRuntimeClasspath
 
-## Java
-Java buildを読んでみる。
+など。全てはページ内の[Configurationリスト](https://docs.gradle.org/7.5.1/userguide/java_plugin.html#tab:configurations)にて。
+それぞれのタスクで、決まったConfigurationが参照される。
+![Configurations use declared dependencies for specific purposes](https://docs.gradle.org/7.5.1/userguide/img/dependency-management-configurations.png)
+
+継承による階層を持たせることもできる。実際、testRuntimeClasspath は runtimeClasspath から拡張されている。
+[公式の例](https://docs.gradle.org/7.5.1/userguide/declaring_dependencies.html#sub:config-inheritance-composition)では、Smoke testを追加するためにpre-definedのtest用Configurationを拡張（依存の追加）する方法を提示している。
+
+```build.gradle.kts
+val smokeTest by configurations.creating {
+    extendsFrom(configurations.testImplementation.get())
+}
+
+dependencies {
+    testImplementation("junit:junit:4.13")
+    smokeTest("org.apache.httpcomponents:httpclient:4.5.5")
+}
+```
+
+## こんな感じに書く、宣言していく
+### Repository
+Maven, Ivy 互換のリポジトリである必要がある。MavenCentral, Google Maven, それ以外のRepo.を指定するやり方。
+
+```build.gradle.kts
+repositories {
+    mavenCentral()
+    google()
+    maven {
+        url = uri("https://repo.spring.io/release")
+    }
+}
+```
+
+## Javaプロジェクトのビルドを読んでみる
 https://docs.gradle.org/7.5.1/userguide/dependency_management_for_java_projects.html
