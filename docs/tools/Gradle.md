@@ -148,7 +148,7 @@ Gradle wrapperは推奨された方法で、特定バージョンのGradleでの
 継承による階層を持たせることもできる。実際、testRuntimeClasspath は runtimeClasspath から拡張されている。
 [公式の例](https://docs.gradle.org/7.5.1/userguide/declaring_dependencies.html#sub:config-inheritance-composition)では、Smoke testを追加するためにpre-definedのtest用Configurationを拡張（依存の追加）する方法を提示している。
 
-```build.gradle.kts
+```kts
 val smokeTest by configurations.creating {
     extendsFrom(configurations.testImplementation.get())
 }
@@ -163,7 +163,7 @@ dependencies {
 ### Repository
 Maven, Ivy 互換のリポジトリである必要がある。MavenCentral, Google Maven, それ以外のRepo.を指定するやり方。
 
-```build.gradle.kts
+```kts
 repositories {
     mavenCentral()
     google()
@@ -172,6 +172,54 @@ repositories {
     }
 }
 ```
+
+### Dependency
+- Module dependencies
+  - リポジトリからモジュールを参照してくる。
+    ```kts
+    dependencies {
+        runtimeOnly(group = "org.springframework", name = "spring-core", version = "2.5")
+        runtimeOnly("org.springframework:spring-aop:2.5")
+        runtimeOnly("org.hibernate:hibernate:3.0.5") {
+            isTransitive = true
+        }
+    }
+    ```
+- File dependencies
+  - 成果物直指定。推移的依存といったメタデータがないやつ。
+    ```kts
+    dependencies {
+        runtimeOnly(files("libs/a.jar", "libs/b.jar"))
+        runtimeOnly(fileTree("libs") { include("*.jar") })
+    }
+    ```
+- Project dependencies
+  - Multi-Projectの時、そのRepo.内モジュール間での依存関係
+    ```kts
+    dependencies {
+        implementation(project(":shared"))
+    }
+    ```
+  - Gradle 7以降、実験的にtype-safe APIがProject deps.にて提供されている
+    ```kts
+    dependencies {
+        implementation(projects.utils)
+        implementation(projects.api)
+    }
+    ```
+
+などなど。
+その他、JSのライブラリをdependency指定する[例](https://docs.gradle.org/7.5.1/userguide/declaring_dependencies.html#sec:resolve_specific_artifacts_from_dependency)も示していた。
+
+## 推移的依存のUpgrade
+https://docs.gradle.org/7.5.1/userguide/dependency_constraints.html
+
+## 推移的依存のExclude
+https://docs.gradle.org/7.5.1/userguide/dependency_downgrade_and_exclude.html
+
+## dependency resolution
+依存解決（バージョンコンフリクトの解消など）は、次に調べたい。
+https://docs.gradle.org/7.5.1/userguide/dependency_resolution.html
 
 ## Javaプロジェクトのビルドを読んでみる
 https://docs.gradle.org/7.5.1/userguide/dependency_management_for_java_projects.html
