@@ -211,10 +211,35 @@ repositories {
 などなど。
 その他、JSのライブラリをdependency指定する[例](https://docs.gradle.org/7.5.1/userguide/declaring_dependencies.html#sec:resolve_specific_artifacts_from_dependency)も示していた。
 
-## 推移的依存のUpgrade
+### 推移的依存のUpgrade
 https://docs.gradle.org/7.5.1/userguide/dependency_constraints.html
 
-## 推移的依存のExclude
+> Often developers incorrectly fix transitive dependency issues by adding direct dependencies.
+> To avoid this, Gradle provides the concept of dependency constraints.
+
+推移的依存のバージョンを変えたいからと、直接依存に定義するのをぼちぼち見かけるので気になるところ。
+
+モジュールの依存関係を解決するとき、バージョンで宣言されたすべての依存関係、すべての推移的依存、すべての依存制約 (Dependency constraints)が考慮され、すべての条件に一致する最も高いバージョンが選択される。
+依存制約はConfigurationを使ってスコープできる。
+
+以下の例では、commons-codec は推移的依存として取り込まれた際の制約として宣言される。直接依存として記述されていない。
+
+```kts
+dependencies {
+    implementation("org.apache.httpcomponents:httpclient")
+    constraints {
+        implementation("org.apache.httpcomponents:httpclient:4.5.3") {
+            because("previous versions have a bug impacting this application")
+        }
+        implementation("commons-codec:commons-codec:1.11") {
+            because("version 1.9 pulled from httpclient has bugs affecting this application")
+        }
+    }
+}
+```
+※ Gradle Module Metadataを使える時のみの話しらしい。
+
+### 推移的依存のExclude
 https://docs.gradle.org/7.5.1/userguide/dependency_downgrade_and_exclude.html
 
 ## dependency resolution
